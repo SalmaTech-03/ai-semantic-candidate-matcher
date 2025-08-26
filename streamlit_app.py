@@ -6,9 +6,10 @@ import plotly.graph_objects as go
 import spacy
 import fitz  # PyMuPDF
 import docx
-import phonenumbers
 import re
+import phonenumbers
 from sentence_transformers import SentenceTransformer, util
+import os
 import google.generativeai as genai
 
 # --- Page Configuration ---
@@ -18,20 +19,17 @@ st.set_page_config(
     layout="wide"
 )
 
-# --- Load Models ---
+# --- Load Models (Cached for Performance) ---
 @st.cache_resource
 def load_models():
-    nlp_model = spacy.load("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
     sentence_model = SentenceTransformer('all-MiniLM-L6-v2')
-    
-    # Configure Gemini AI
     try:
         genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
         gemini_model = genai.GenerativeModel('gemini-2.5-flash')
     except Exception:
         gemini_model = None
-
-    return nlp_model, sentence_model, gemini_model
+    return nlp, sentence_model, gemini_model
 
 nlp, sentence_model, gemini_model = load_models()
 
@@ -45,18 +43,21 @@ SKILLS_DB = [
     'project management', 'product management'
 ]
 
-# --- Resume Parsing Functions ---
-def extract_text(file):
+# --- Helper Functions ---
+def extract_text(file_obj):
     text = ""
-    ext = file.name.split(".")[-1].lower()
-    if ext == "pdf":
-        with fitz.open(stream=file.getvalue(), filetype="pdf") as doc:
-            for page in doc:
-                text += page.get_text()
-    elif ext == "docx":
-        doc = docx.Document(file)
-        for para in doc.paragraphs:
-            text += para.text + "\n"
+    ext = os.path.splitext(file_obj.name)[1].lower()
+    try:
+        if ext == ".pdf":
+            with fitz.open(stream=file_obj.getvalue(), filetype="pdf") as doc:
+                for page in doc:
+                    text += page.get_text()
+        elif ext == ".docx":
+            doc = docx.Document(file_obj)
+            for para in doc.paragraphs:
+                text += para.text + "\n"
+    except Exception as e:
+        st.error(f"Error reading {file_obj.name}: {e}")
     return text
 
 def extract_contact_info(text):
@@ -64,7 +65,7 @@ def extract_contact_info(text):
     if nlp:
         doc = nlp(text[:300])
         for ent in doc.ents:
-            if ent.label_ == 'PERSON':
+            if ent.label_ == "PERSON":
                 name = ent.text
                 break
     email_match = re.search(r'[\w\.-]+@[\w\.-]+', text)
@@ -76,7 +77,7 @@ def extract_contact_info(text):
             break
     except Exception:
         pass
-    return name, email, phone
+    return name or "Not Found", email or "Not Found", phone or "Not Found"
 
 def extract_skills(text):
     found_skills = set()
@@ -86,44 +87,19 @@ def extract_skills(text):
             found_skills.add(skill)
     return list(found_skills)
 
-def extract_education(text):
-    education = []
-    pattern = r'(B\.S\.?|M\.S\.?|Ph\.D\.?|Bachelor|Master|PhD)\s(of|in)\s([\w\s]+)'
-    matches = re.findall(pattern, text, re.IGNORECASE)
-    for match in matches:
-        education.append(f"{match[0]} in {match[2]}")
-    return education if education else ["Not Found"]
-
-def parse_resume(text):
-    name, email, phone = extract_contact_info(text)
-    skills = extract_skills(text)
-    education = extract_education(text)
-    return {
-        "name": name or "Not Found",
-        "email": email or "Not Found",
-        "phone": phone or "Not Found",
-        "skills": skills,
-        "education": education
-    }
-
-# --- AI Summary ---
 def generate_ai_summary(resume_text, jd_text):
     if not gemini_model:
-        return "Gemini AI not available"
-    
+        return "Gemini model not available"
     safety_settings = [
         {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
         {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
         {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
         {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
     ]
-
     prompt = f"""
-    Analyze this resume in context of the job description. Provide a concise 3-sentence professional summary.
-
+    Analyze the resume in context of the job description. Provide a 3-sentence professional summary.
     JOB DESCRIPTION:
     {jd_text}
-
     RESUME:
     {resume_text[:4000]}
     """
@@ -133,64 +109,91 @@ def generate_ai_summary(resume_text, jd_text):
     except Exception as e:
         return f"Could not generate summary: {e}"
 
-# --- Candidate Analysis ---
-def analyze_resume(resume_text, jd_text, jd_skills, jd_embedding):
+def analyze_resume(resume_text, jd_text, jd_skills_set, jd_embedding):
     # Semantic similarity
     resume_embedding = sentence_model.encode(resume_text, convert_to_tensor=True)
     cosine_score = util.pytorch_cos_sim(resume_embedding, jd_embedding).item()
-    match_percentage = round(cosine_score * 100, 2)
-    
-    # Skills matching
+    match_score = round(cosine_score * 100, 2)
+
+    # Skills
     resume_skills = extract_skills(resume_text)
-    matching_skills = list(set(resume_skills) & jd_skills)
-    missing_skills = list(jd_skills - set(resume_skills))
-    
-    # AI summary
+    matching_skills = list(set(resume_skills) & jd_skills_set)
+    missing_skills = list(jd_skills_set - set(resume_skills))
+
+    # Contact
+    name, email, phone = extract_contact_info(resume_text)
+
+    # AI Summary
     ai_summary = generate_ai_summary(resume_text, jd_text)
-    
+
     return {
-        "match_score": match_percentage,
+        "match_score": match_score,
         "matching_skills": matching_skills,
         "missing_skills": missing_skills,
-        "ai_summary": ai_summary
+        "ai_summary": ai_summary,
+        "name": name,
+        "email": email,
+        "phone": phone
     }
+
+def create_skill_gap_chart(candidate):
+    matching = len(candidate['matching_skills'])
+    missing = len(candidate['missing_skills'])
+    fig = go.Figure(data=[
+        go.Bar(name='Matching', x=['Skills'], y=[matching], marker_color='#4CAF50', text=matching, textposition='auto'),
+        go.Bar(name='Missing', x=['Skills'], y=[missing], marker_color='#F44336', text=missing, textposition='auto')
+    ])
+    fig.update_layout(
+        barmode='stack',
+        title=f"Skill Gap: {candidate['name']}",
+        yaxis_title="Number of Skills"
+    )
+    return fig
 
 # --- Streamlit UI ---
 st.title("AI Semantic Candidate Matcher ✨")
-st.write("Upload resumes and provide a job description to rank candidates.")
+st.write("Upload resumes and a job description to rank candidates.")
 
-# Upload resumes and job description
+# Inputs
 col1, col2 = st.columns([1, 2])
 with col1:
-    uploaded_files = st.file_uploader("Upload Resumes (PDF/DOCX)", type=["pdf","docx"], accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Upload Resumes (PDF/DOCX)", type=["pdf", "docx"], accept_multiple_files=True)
 with col2:
     job_description = st.text_area("Paste Job Description", height=250)
 
 if st.button("Rank Candidates"):
     if uploaded_files and job_description:
-        with st.spinner("Analyzing resumes..."):
-            jd_skills = set(extract_skills(job_description))
+        with st.spinner(f"Analyzing {len(uploaded_files)} resumes..."):
+            jd_skills_set = set(extract_skills(job_description))
             jd_embedding = sentence_model.encode(job_description, convert_to_tensor=True)
-            
             results = []
             for file in uploaded_files:
                 text = extract_text(file)
-                parsed_resume = parse_resume(text)
-                analysis = analyze_resume(text, job_description, jd_skills, jd_embedding)
-                analysis.update(parsed_resume)
-                analysis["filename"] = file.name
-                results.append(analysis)
-            
-            # Display results
-            df = pd.DataFrame(results).sort_values(by='match_score', ascending=False)
-            df['matching_skill_count'] = df['matching_skills'].apply(len)
-            df['missing_skill_count'] = df['missing_skills'].apply(len)
-            
-            st.header("Ranked Candidate Results")
-            st.dataframe(df[['filename','name','email','phone','match_score','matching_skill_count','missing_skill_count','ai_summary']], use_container_width=True)
-            
-            # Download CSV
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button("Download Results CSV", csv, "candidate_results.csv", "text/csv")
+                if text:
+                    analysis = analyze_resume(text, job_description, jd_skills_set, jd_embedding)
+                    analysis['filename'] = file.name
+                    results.append(analysis)
+
+            if results:
+                df = pd.DataFrame(results).sort_values(by='match_score', ascending=False)
+                df['matching_count'] = df['matching_skills'].apply(len)
+                df['missing_count'] = df['missing_skills'].apply(len)
+
+                # Display table
+                st.header("Ranked Candidates")
+                st.dataframe(
+                    df[['filename','name','email','phone','match_score','matching_count','missing_count','ai_summary']],
+                    use_container_width=True
+                )
+
+                # Skill gap chart per candidate
+                st.header("Skill Gap Visualization")
+                for candidate in results:
+                    st.subheader(candidate['name'])
+                    st.plotly_chart(create_skill_gap_chart(candidate), use_container_width=True)
+
+                # Download CSV
+                csv = df.to_csv(index=False).encode('utf-8')
+                st.download_button("Download Results CSV", csv, "candidate_results.csv", "text/csv")
     else:
-        st.warning("Please upload resumes and provide a job description.")
+        st.warning("Please upload at least one resume and provide a job description.")
