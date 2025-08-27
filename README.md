@@ -4,7 +4,7 @@ emoji: ✨
 colorFrom: indigo
 colorTo: purple
 sdk: streamlit
-python_version: 3.10
+python_version: 3.10.9
 app_file: streamlit_app.py
 ---
 
