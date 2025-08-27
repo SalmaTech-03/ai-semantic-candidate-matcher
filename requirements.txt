@@ -19,3 +19,4 @@ transformers==4.35.2
 
 # --- AI Model for Summarization ---
 google-generativeai==0.3.2
+huggingface-hub==0.20.3
