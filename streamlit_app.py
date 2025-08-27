@@ -28,7 +28,7 @@ if 'results_df' not in st.session_state:
 def load_models():
     """Loads all necessary AI models into memory."""
     print("Loading AI models...")
-    nlp = sp.load("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
     model = SentenceTransformer('all-MiniLM-L6-v2')
     try:
         genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
