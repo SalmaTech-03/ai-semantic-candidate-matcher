@@ -18,6 +18,6 @@ torch==2.1.2
 transformers==4.35.2
 
 # --- AI Model for Summarization ---
-google-generativeai==0.3.2
+google-generativeai>=0.8.0
 huggingface-hub==0.20.3
 plotly==5.18.0
