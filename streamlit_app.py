@@ -29,7 +29,7 @@ def load_models():
         genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
         # --- FIX: Use the latest stable model name ---
         # NEW LINE (corrected)
-        gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+        gemini_model = genai.GenerativeModel('gemini-2.5-pro')
     except Exception as e:
         st.error(f"Error configuring Gemini API: {e}. Ensure GOOGLE_API_KEY is set in secrets.")
         gemini_model = None
