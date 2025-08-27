@@ -30,7 +30,7 @@ def load_models():
     # Configure the Gemini API using Streamlit's built-in secrets management
     try:
         genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-        gemini_model = genai.GenerativeModel('gemini-1.0-pro')
+        gemini_model = genai.GenerativeModel('gemini-2.5-flash')
     except Exception as e:
         # Display a user-friendly error if the API key is not set
         st.error(f"Error configuring Gemini API: {e}. Please ensure you have a GOOGLE_API_KEY secret set in your Hugging Face Space settings.")
