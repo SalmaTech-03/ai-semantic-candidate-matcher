@@ -83,15 +83,48 @@ def analyze_resume(resume_text, jd_text, jd_skills_set, jd_embedding, sentence_m
     missing_skills = list(jd_skills_set - resume_skills)
     ai_summary = generate_ai_summary(resume_text, jd_text, gemini_model)
     return {"match_score": match_percentage, "matching_skills": matching_skills, "missing_skills": missing_skills, "ai_summary": ai_summary}
+# --- Find this function in your streamlit_app.py and replace it ---
 
-def create_skill_gap_chart(candidate_data):
+def create_skill_gap_chart(candidate_data, jd_skills_set):
+    """Generates a Plotly Donut Chart for a single candidate's skill gap."""
     matching_count = len(candidate_data['matching_skills'])
     missing_count = len(candidate_data['missing_skills'])
-    fig = go.Figure(data=[
-        go.Bar(name='Matching Skills', x=['Skills'], y=[matching_count], marker_color='#4CAF50', text=matching_count, textposition='auto'),
-        go.Bar(name='Missing Skills', x=['Skills'], y=[missing_count], marker_color='#F44336', text=missing_count, textposition='auto')
-    ])
-    fig.update_layout(barmode='stack', title="Skill Gap Overview", yaxis_title="Number of Skills", legend_title="Skill Type", margin=dict(t=30, b=0, l=0, r=0))
+    total_required = len(jd_skills_set)
+
+    # In case no skills are in the JD, to avoid division by zero
+    if total_required == 0:
+        st.write("No skills were identified in the Job Description to create a chart.")
+        return None
+
+    # Calculate percentages
+    match_percentage = (matching_count / total_required) * 100
+
+    # Data for the donut chart
+    labels = ['Matching Skills', 'Missing Skills']
+    values = [matching_count, missing_count]
+    colors = ['#4CAF50', '#F44336'] # Green for matching, Red for missing
+
+    # Create the figure
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.6, 
+                                 marker_colors=colors,
+                                 textinfo='value', # Show the count on the slices
+                                 hoverinfo='label+percent')])
+
+    fig.update_layout(
+        title={
+            'text': f"<b>Skill Coverage: {match_percentage:.1f}%</b>",
+            'y':0.95,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        annotations=[dict(text=f'<b>{matching_count}</b><br>of<br><b>{total_required}</b>', 
+                          x=0.5, y=0.5, font_size=20, showarrow=False)],
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=-0.1, xanchor="center", x=0.5),
+        margin=dict(t=60, b=20, l=0, r=0)
+    )
+    
     return fig
 
 # --- UI State Initialization ---
