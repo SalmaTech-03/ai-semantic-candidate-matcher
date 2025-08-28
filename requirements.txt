@@ -13,7 +13,7 @@ PyMuPDF==1.23.8
 python-docx==1.1.0
 
 # --- High-Performance Semantic Search & Embeddings ---
-sentence-transformers==2.2.2
+sentence-transformers==2.7.2
 torch==2.1.2
 transformers==4.35.2
 
