@@ -27,9 +27,7 @@ def load_models():
     model = SentenceTransformer('all-MiniLM-L6-v2')
     try:
         genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-        # --- FIX: Use the latest stable model name ---
-        # NEW LINE (corrected)
-        gemini_model = genai.GenerativeModel('gemini-2.5-pro')
+        gemini_model = genai.GenerativeModel('gemini-1.5-flash')
     except Exception as e:
         st.error(f"Error configuring Gemini API: {e}. Ensure GOOGLE_API_KEY is set in secrets.")
         gemini_model = None
@@ -144,20 +142,20 @@ else:
 
     with master_col:
         st.header("Ranked Candidates")
-        st.write(f"Click on a candidate to view details.")
+        st.write(f"Click on a resume to view its detailed analysis.")
         
-        # Display each candidate as a selectable button
+        # --- NEW: Display each candidate as a selectable button ---
         for index, row in st.session_state.results_df.iterrows():
             # When a button is clicked, it updates the selected_candidate in the session state
-            if st.button(f"{row['filename']} ({row['match_score']:.2f}%)", key=row['filename'], use_container_width=True):
+            if st.button(f"📄 {row['filename']} ({row['match_score']:.2f}%)", key=row['filename'], use_container_width=True):
                 st.session_state.selected_candidate = row['filename']
 
     with detail_col:
         if st.session_state.selected_candidate:
-            # Get the full data for the selected candidate
+            # Get the full data for the currently selected candidate
             candidate_details = st.session_state.results_df[st.session_state.results_df['filename'] == st.session_state.selected_candidate].iloc[0]
             
-            st.header(f"Deep Dive: {candidate_details['filename']}")
+            st.header(f"Deep Dive Analysis: {candidate_details['filename']}")
             
             st.subheader("🤖 AI Summary")
             st.info(candidate_details['ai_summary'])
@@ -174,4 +172,5 @@ else:
                 st.subheader("❌ Missing Skills")
                 st.write(f"`{', '.join(candidate_details['missing_skills'])}`")
         else:
+            # This message shows if for some reason no candidate is selected
             st.info("Select a candidate from the list on the left to see their detailed analysis.")
