@@ -1,10 +1,10 @@
-# requirements.txt
+# requirements.txt - Final Stable Versions for Deployment
 
-# --- Main Framework ---
+# --- Main Framework & UI ---
 streamlit==1.35.0
-
-# --- Data Handling & Charting ---
 pandas==2.1.4
+plotly==5.18.0
+rich==13.9.4 # Pinned to be compatible with Streamlit
 
 # --- NLP and Text Processing ---
 spacy==3.7.2
@@ -13,11 +13,10 @@ PyMuPDF==1.23.8
 python-docx==1.1.0
 
 # --- High-Performance Semantic Search & Embeddings ---
-sentence-transformers==2.7.2
+sentence-transformers==2.7.0 # Corrected stable version
 torch==2.1.2
 transformers==4.35.2
+huggingface-hub==0.20.3 # Pinned for compatibility
 
 # --- AI Model for Summarization ---
-google-generativeai>=0.8.0
-huggingface-hub==0.20.3
-plotly==5.18.0
+google-generativeai==0.3.2
