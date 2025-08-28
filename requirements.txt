@@ -4,7 +4,7 @@
 streamlit==1.35.0
 pandas==2.1.4
 plotly==5.18.0
-rich==13.9.4 # Pinned to be compatible with Streamlit
+rich==13.9.4
 
 # --- NLP and Text Processing ---
 spacy==3.7.2
@@ -13,10 +13,10 @@ PyMuPDF==1.23.8
 python-docx==1.1.0
 
 # --- High-Performance Semantic Search & Embeddings ---
-sentence-transformers==2.7.0 # Corrected stable version
+sentence-transformers==2.7.0
 torch==2.1.2
 transformers==4.35.2
-huggingface-hub==0.20.3 # Pinned for compatibility
+huggingface-hub==0.20.3
 
 # --- AI Model for Summarization ---
 google-generativeai==0.3.2

@@ -11,12 +11,43 @@ from sentence_transformers import SentenceTransformer, util
 import os
 import google.generativeai as genai
 
-# --- PAGE CONFIGURATION ---
+# --- PAGE CONFIGURATION (MUST be the first Streamlit command) ---
 st.set_page_config(
     page_title="AI Semantic Candidate Matcher",
     page_icon="✨",
     layout="wide"
 )
+
+# --- CUSTOM CSS FOR SKILL BADGES ---
+st.markdown("""
+<style>
+.skill-badge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+}
+.skill-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+}
+.matching-skill {
+    background-color: rgba(4, 170, 109, 0.2);
+    color: #04AA6D;
+    border: 1px solid #04AA6D;
+}
+.missing-skill {
+    background-color: rgba(255, 75, 75, 0.2);
+    color: #FF4B4B;
+    border: 1px solid #FF4B4B;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --- LOAD MODELS (Cached for Performance) ---
 @st.cache_resource
@@ -27,8 +58,7 @@ def load_models():
     model = SentenceTransformer('all-MiniLM-L6-v2')
     try:
         genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-        # Use the latest, most reliable flash model
-        gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+        gemini_model = genai.GenerativeModel('gemini-2.5-flash')
     except Exception as e:
         st.error(f"Error configuring Gemini API: {e}. Ensure GOOGLE_API_KEY is set in secrets.")
         gemini_model = None
@@ -93,7 +123,7 @@ def create_skill_gap_chart(candidate_data, jd_skills_set):
     """Generates a Plotly Donut Chart for a single candidate's skill gap."""
     matching_count = len(candidate_data['matching_skills'])
     total_required = len(jd_skills_set)
-    missing_count = total_required - matching_count
+    missing_count = total_required - matching_count if total_required >= matching_count else 0
     
     if total_required == 0:
         st.write("No skills were identified in the Job Description to create a chart.")
@@ -113,6 +143,14 @@ def create_skill_gap_chart(candidate_data, jd_skills_set):
         margin=dict(t=60, b=20, l=0, r=0)
     )
     return fig
+
+def generate_skill_badges_html(skills_list, skill_type):
+    """Generates a string of HTML for skill badges."""
+    if not skills_list:
+        return "<i>None found.</i>"
+    class_name = "matching-skill" if skill_type == "matching" else "missing-skill"
+    badges_html = "".join([f'<span class="skill-badge {class_name}">{skill.title()}</span>' for skill in skills_list])
+    return f'<div class="skill-badge-container">{badges_html}</div>'
 
 # --- UI State Initialization ---
 if 'results_df' not in st.session_state:
@@ -181,14 +219,16 @@ else:
             chart_col, skills_col = st.columns(2)
             with chart_col:
                 st.subheader("📊 Visual Skill Gap")
-                # --- This is the corrected function call ---
                 skill_chart = create_skill_gap_chart(candidate_details, st.session_state.jd_skills)
                 if skill_chart:
                     st.plotly_chart(skill_chart, use_container_width=True)
             with skills_col:
                 st.subheader("✅ Matching Skills")
-                st.write(f"`{', '.join(candidate_details['matching_skills'])}`")
+                matching_html = generate_skill_badges_html(candidate_details['matching_skills'], "matching")
+                st.markdown(matching_html, unsafe_allow_html=True)
+                
                 st.subheader("❌ Missing Skills")
-                st.write(f"`{', '.join(candidate_details['missing_skills'])}`")
+                missing_html = generate_skill_badges_html(candidate_details['missing_skills'], "missing")
+                st.markdown(missing_html, unsafe_allow_html=True)
         else:
             st.info("Select a candidate from the list on the left to see their detailed analysis.")
