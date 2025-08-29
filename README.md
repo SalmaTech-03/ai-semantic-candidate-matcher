@@ -1,6 +1,8 @@
 # AI Semantic Candidate Matcher ✨
 
-An advanced web application that uses semantic search and generative AI to intelligently match candidate resumes with job descriptions. This tool goes beyond simple keyword searching to understand the contextual meaning of skills and experience, providing recruiters with a ranked and analyzed list of the most suitable candidates.
+This is an advanced web application that uses semantic search and generative AI to intelligently match candidate resumes with job descriptions. It goes beyond simple keyword searching to understand the contextual meaning of skills and experience, providing recruiters with a ranked and analyzed list of the most suitable candidates.
+
+**[➡️ View the Live Demo Here!](https://ai-semantic-candidate-matcher-2deybfp6ibrdqstcz5qnjd.streamlit.app/)**
 
 ## Core Features
 -   **Batch Resume Upload:** Analyze multiple resumes (`.pdf`, `.docx`) simultaneously against a single job description.
@@ -88,4 +90,3 @@ To run this application on your local machine, follow these steps.
     ```bash
     streamlit run streamlit_app.py
     ```
-    The application will open in your web browser.
