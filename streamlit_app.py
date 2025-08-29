@@ -11,7 +11,7 @@ from sentence_transformers import SentenceTransformer, util
 import os
 import google.generativeai as genai
 
-# --- PAGE CONFIGURATION (MUST be the first Streamlit command) ---
+# --- PAGE CONFIGURATION ---
 st.set_page_config(
     page_title="AI Semantic Candidate Matcher",
     page_icon="✨",
@@ -58,7 +58,7 @@ def load_models():
     model = SentenceTransformer('all-MiniLM-L6-v2')
     try:
         genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-        gemini_model = genai.GenerativeModel('gemini-2.5-flash')
+        gemini_model = genai.GenerativeModel('gemini-1.5-flash')
     except Exception as e:
         st.error(f"Error configuring Gemini API: {e}. Ensure GOOGLE_API_KEY is set in secrets.")
         gemini_model = None
@@ -75,7 +75,6 @@ SKILLS_DB = [
 ]
 
 def extract_text_from_file(file_uploader_object):
-    """Extracts text from a file uploaded via Streamlit."""
     try:
         file_extension = os.path.splitext(file_uploader_object.name)[1].lower()
         if file_extension == ".pdf":
@@ -89,7 +88,6 @@ def extract_text_from_file(file_uploader_object):
     return ""
 
 def extract_skills(text):
-    """Extracts a list of skills from text based on the SKILLS_DB."""
     found_skills = set()
     text_lower = text.lower()
     for skill in SKILLS_DB:
@@ -98,7 +96,6 @@ def extract_skills(text):
     return list(found_skills)
 
 def generate_ai_summary(resume_text, jd_text, gemini_model):
-    """Generates a brief summary for a candidate using the Gemini API."""
     if not gemini_model: return "Gemini model not available."
     safety_settings = [{"category": c, "threshold": "BLOCK_NONE"} for c in ["HARM_CATEGORY_HARASSMENT", "HARM_CATEGORY_HATE_SPEECH", "HARM_CATEGORY_SEXUALLY_EXPLICIT", "HARM_CATEGORY_DANGEROUS_CONTENT"]]
     prompt = f"Analyze the resume in context of the job description. Provide a concise, 3-sentence professional summary. JOB DESCRIPTION: {jd_text} --- RESUME: {resume_text[:4000]} ---"
@@ -109,7 +106,6 @@ def generate_ai_summary(resume_text, jd_text, gemini_model):
         return f"Could not generate summary: {e}"
 
 def analyze_resume(resume_text, jd_text, jd_skills_set, jd_embedding, sentence_model, gemini_model):
-    """Performs a full analysis of a single resume."""
     resume_embedding = sentence_model.encode(resume_text)
     cosine_score = util.pytorch_cos_sim(resume_embedding, jd_embedding).item()
     match_percentage = round(cosine_score * 100, 2)
@@ -120,7 +116,6 @@ def analyze_resume(resume_text, jd_text, jd_skills_set, jd_embedding, sentence_m
     return {"match_score": match_percentage, "matching_skills": matching_skills, "missing_skills": missing_skills, "ai_summary": ai_summary}
 
 def create_skill_gap_chart(candidate_data, jd_skills_set):
-    """Generates a Plotly Donut Chart for a single candidate's skill gap."""
     matching_count = len(candidate_data['matching_skills'])
     total_required = len(jd_skills_set)
     missing_count = total_required - matching_count if total_required >= matching_count else 0
