@@ -20,3 +20,5 @@ huggingface-hub==0.20.3
 
 # --- AI Model for Summarization ---
 google-generativeai==0.3.2
+# --- FAANG-Level Vector Store ---
+faiss-cpu==1.8.0
