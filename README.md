@@ -1,11 +1,8 @@
 # Enterprise AI Talent Platform ✨
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ai-semantic-candidate-matcher-2deybfp6ibrdqstcz5qnjd.streamlit.app/)
 
 An advanced, enterprise-grade application that demonstrates a full-stack, AI-driven solution to modern recruitment challenges. This platform moves beyond simple matching to provide a holistic, multi-faceted analysis of candidate suitability, incorporating explainable AI and scalable architecture principles.
 
-![App Screenshot](https://i.imgur.com/your-screenshot-url.png) 
-*(Note: Replace with a screenshot of this new, advanced version!)*
 
 ## 🚀 Core Features (FAANG-Level)
 -   **Multi-Faceted Scoring:** Ranks candidates not just on a single score, but on a weighted combination of **Semantic Match**, **Skill Coverage**, **Years of Experience**, and **Educational Background**.
