@@ -1,52 +1,147 @@
-# Enterprise AI Talent Platform ✨
+# 🧬 Enterprise AI Talent Platform
+### *High-Dimensional Semantic Resume Analysis & RAG Orchestration Engine*
 
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.35.0-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)](https://streamlit.io/)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Google Gemini](https://img.shields.io/badge/GenAI-Gemini%20Flash%201.5-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![FAISS](https://img.shields.io/badge/Vector%20Compute-FAISS-005C84?style=for-the-badge&logo=meta&logoColor=white)](https://github.com/facebookresearch/faiss)
+[![Hugging Face](https://img.shields.io/badge/Latent%20Space-Sentence%20Transformers-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/)
+[![Docker](https://img.shields.io/badge/DevOps-DevContainer-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://containers.dev/)
 
-An advanced, enterprise-grade application that demonstrates a full-stack, AI-driven solution to modern recruitment challenges. This platform moves beyond simple matching to provide a holistic, multi-faceted analysis of candidate suitability, incorporating explainable AI and scalable architecture principles.
-
-
-## 🚀 Core Features (FAANG-Level)
--   **Multi-Faceted Scoring:** Ranks candidates not just on a single score, but on a weighted combination of **Semantic Match**, **Skill Coverage**, **Years of Experience**, and **Educational Background**.
--   **AI-Powered Structured Data Extraction:** Uses the Google Gemini LLM as a zero-shot parser to intelligently extract complex entities like "total years of experience" and "key achievements" from unstructured resume text.
--   **Evidence-Based Q&A (RAG):** Implements an advanced Retrieval-Augmented Generation pipeline. Recruiters can ask specific questions to a resume and receive answers backed by cited evidence from the text, powered by an in-memory **FAISS vector store**.
--   **Explainable AI (XAI):** The UI provides a full score breakdown, showing *why* a candidate was ranked highly and highlighting their key achievements.
--   **Interactive Dashboard:** A professional "master-detail" interface allows for rapid, fluid exploration of the ranked candidate pool.
-
----
-
-## 🛠️ Technology Stack
-
-| Category                      | Technologies                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Language & Frontend**       | ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white) ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white) ![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white) ![Plotly](https://img.shields.io/badge/Plotly-3F4F75?style=for-the-badge&logo=plotly&logoColor=white)                                               |
-| **AI / ML Engine**            | ![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white) ![Transformers](https://img.shields.io/badge/Transformers-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black) ![spaCy](https://img.shields.io/badge/spaCy-09A3D5?style=for-the-badge&logo=spacy&logoColor=white) ![Google Gemini](https://img.shields.io/badge/Google_Gemini-8E77D5?style=for-the-badge&logo=google&logoColor=white) |
-| **Vector Store & Retrieval** | ![Facebook AI](https://img.shields.io/badge/Facebook_AI-1877F2?style=for-the-badge&logo=facebook&logoColor=white) (FAISS)                                                                                                                                                                                                                                                                                                                                              |
-| **Deployment & Version Control** | ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white) ![Git](https://img.shields.io/badge/GIT-E44C30?style=for-the-badge&logo=git&logoColor=white)                                                                                                                                                                                                                                                                 |
+**The Enterprise AI Talent Platform** is not just a resume parser—it is a sophisticated **RAG (Retrieval-Augmented Generation)** system. By projecting candidate profiles and job descriptions into a shared high-dimensional latent space, it performs semantic alignment far superior to traditional keyword matching. It features an interactive **AI Interrogator** that allows recruiters to "chat" with resumes to verify claims using evidence-based vector retrieval.
 
 ---
 
-## 🔬 Architectural Highlights
+## 🏗️ System Architecture
 
-1.  **Text Extraction & Chunking:** Text is extracted and broken into smaller, overlapping chunks to create a dense context for retrieval.
-2.  **Vector Store Creation:** On selecting a candidate, their resume chunks are instantly embedded and indexed into an in-memory **FAISS** vector store for ultra-fast similarity search.
-3.  **Hybrid Analysis:**
-    *   **Initial Ranking:** A fast, multi-faceted score (semantic, skill, etc.) is calculated for all candidates.
-    *   **Deep Dive & RAG:** For a selected candidate, the system performs a deeper analysis, enabling the RAG Q&A pipeline to query the specific candidate's vector store.
-4.  **Explainable Generation:** The Gemini LLM is prompted not just to answer questions, but to do so *only* using the context retrieved from the FAISS search, ensuring answers are grounded in the resume's actual text.
+The solution implements a **Multi-Stage Reasoning Pipeline** fusing deterministic logic with probabilistic Generative AI.
+
+```mermaid
+graph TD
+    subgraph "Ingestion Layer"
+    A[PDF/DOCX Upload] -->|PyMuPDF/Python-Docx| B(Text Extraction)
+    B -->|Spacy NLP| C(Tokenization & Cleaning)
+    end
+
+    subgraph "Vector Compute Layer"
+    C -->|all-MiniLM-L6-v2| D[Dense Vector Embeddings]
+    D -->|IndexFlatL2| E[(FAISS Vector Store)]
+    end
+
+    subgraph "Inference Engine"
+    F[Job Description] -->|Embedding| G(Semantic Similarity Calc)
+    D <--> G
+    B -->|Zero-Shot Prompting| H[Gemini 1.5 Flash]
+    H -->|JSON Parsing| I(Structured Data: Exp, Edu)
+    end
+
+    subgraph "RAG Interrogator"
+    J[User Question] -->|Vector Search| E
+    E -->|Top-K Chunks| K[Context Window]
+    K --> H
+    H -->|Hallucination-Free Answer| L[Evidence-Based Output]
+    end
+```
 
 ---
 
-## 🚀 How to Run Locally
+## 🧠 Core Intelligence Modules
 
-1.  **Clone & Setup:**
-    ```bash
-    git clone https://github.com/SalmaTech-03/ai-semantic-candidate-matcher.git
-    cd ai-semantic-candidate-matcher
-    python -m venv .venv
-    .venv\Scripts\activate  # On Windows
-    pip install -r requirements.txt
-    ```
-2.  **Set Secrets:** Create a `.streamlit/secrets.toml` file and add your `GOOGLE_API_KEY`.
-3.  **Run:**
-    ```bash
-    streamlit run streamlit_app.py
-    
+### 1. High-Dimensional Semantic Matching (Cosine Similarity)
+Traditional parsers fail on context. We utilize **Sentence Transformers (`all-MiniLM-L6-v2`)** to encode text into **384-dimensional vectors**.
+*   **The Math:** We calculate the cosine similarity between the Job Description vector ($V_{JD}$) and Candidate vector ($V_{Cand}$).
+    $$ \text{Score} = \frac{V_{JD} \cdot V_{Cand}}{\|V_{JD}\| \|V_{Cand}\|} $$
+*   **Result:** Matches candidates who describe the *concept* of "Scalable Cloud Architecture" even if they don't explicitly say "AWS".
+
+### 2. Retrieval-Augmented Generation (RAG)
+We implemented a **FAISS (Facebook AI Similarity Search)** index for real-time candidate interrogation.
+*   **Chunking Strategy:** Resumes are split into 300-word sliding windows with 50-word overlap to preserve context boundaries.
+*   **Vector Search:** When a user asks *"Did they use Python in a production environment?"*, the system retrieves the nearest neighbor vectors to the query.
+*   **Grounded Answer:** These vectors are injected into the Gemini context window, forcing the LLM to answer **only** based on retrieved evidence, eliminating hallucinations.
+
+### 3. Weighted Ensemble Scoring Algorithm
+Final ranking is not arbitrary. It is a deterministic weighted sum of four distinct analytical axes:
+*   $\alpha$ **(40%) Semantic Alignment:** Vector space proximity.
+*   $\beta$ **(30%) Hard Skill Overlap:** Regex-based exact matching against `SKILLS_DB`.
+*   $\gamma$ **(20%) Experience Normalization:** LLM-extracted years vs. Requirements.
+*   $\delta$ **(10%) Education Hierarchy:** Weighted mapping (PhD > Master's > Bachelor's).
+
+---
+
+## 🛠️ Technical Stack & Engineering Decisions
+
+| Domain | Technology | Engineering Rationale |
+| :--- | :--- | :--- |
+| **LLM Orchestration** | `Google Gemini 1.5 Flash` | Selected for high throughput and massive context window (1M tokens) for handling verbose CVs. |
+| **Vector Database** | `FAISS-CPU` | In-memory vector search optimized for dense vectors; faster than pinecone/chroma for session-based indexing. |
+| **Embeddings** | `Sentence-Transformers` | Uses `all-MiniLM-L6-v2` for the optimal balance of inference speed and semantic capture quality. |
+| **UI/State** | `Streamlit` | Utilizes `@st.cache_resource` to keep heavy ML models (Spacy/Transformers) in memory, ensuring sub-second reruns. |
+| **Environment** | `DevContainers` | Full infrastructure-as-code. Pre-configured with Python 3.11 and system-level dependencies (build-essential) for FAISS. |
+
+---
+
+## ⚡ Deployment & Infrastructure
+
+### 🐳 The Dockerized Workflow (DevContainer)
+This project is built for **Codespaces** and **Remote Containers**. Zero "it works on my machine" issues.
+
+1.  **System Dependencies:** The `devcontainer.json` automatically runs `apt update` and installs system libraries required for `fitz` (PyMuPDF) and `faiss`.
+2.  **Port Forwarding:** Auto-configures port `8501` for instant preview.
+3.  **Extension Pack:** Pre-loads `ms-python` and `pylance` for immediate intellisense.
+
+### 🚀 Local Setup (Standard)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/yourusername/ai-semantic-candidate-matcher.git
+
+# 2. Initialize Virtual Environment
+python -m venv venv
+source venv/bin/activate
+
+# 3. Install the AI Stack
+pip install -r requirements.txt
+
+# 4. Download NLP Artifacts
+python -m spacy download en_core_web_sm
+
+# 5. Configure Secrets
+# Create .streamlit/secrets.toml and add:
+# GOOGLE_API_KEY = "your_key_here"
+
+# 6. Launch Application
+streamlit run streamlit_app.py
+```
+
+---
+
+## 📂 Project Directory Structure
+
+```text
+ai-semantic-candidate-matcher/
+├── .devcontainer/             # 🐳 Infrastructure as Code
+│   └── devcontainer.json      # Docker & VS Code Config
+├── .streamlit/                # 🔐 App Configuration
+│   └── secrets.toml           # API Keys (GitIgnored)
+├── src/                       # (Optional) Module separation
+├── streamlit_app.py           # 🚀 Main Application Kernel
+├── requirements.txt           # 📦 Pinned Production Dependencies
+└── README.md                  # 📄 System Documentation
+```
+
+---
+
+## 🔮 Future Engineering Roadmap
+
+*   **GraphRAG Integration:** Move beyond vector similarity to Knowledge Graph extraction for mapping candidate relationships (e.g., "Worked at Google" -> implies "High Scalability Experience").
+*   **Multi-Modal Analysis:** Use Gemini Pro Vision to analyze graphical resume elements (charts, portfolio thumbnails).
+*   **Asynchronous Processing:** Implement Celery/Redis for batch processing of 1000+ resumes.
+
+---
+
+<div align="center">
+
+**[View Source Code](https://github.com/syedsalma2003/ai-semantic-candidate-matcher)** | **[Report Bug](https://github.com/syedsalma2003/ai-semantic-candidate-matcher/issues)**
+
+<sub>Engineered with precision. Powered by Mathematics & Transformers.</sub>
+</div>
