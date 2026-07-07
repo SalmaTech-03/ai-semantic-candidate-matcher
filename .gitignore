@@ -1,11 +1,15 @@
-# .gitignore
-
-# Environment variables
-.env
-
-# Python virtual environment
-.venv/
+# Python
 __pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
 
-# VSCode settings
-.vscode/
+# Secrets (DO NOT REMOVE THESE)
+.env
+.streamlit/secrets.toml
+secrets.toml
+
+# OS
+.DS_Store
+Thumbs.db
