@@ -1,147 +1,200 @@
-# 🧬 Enterprise AI Talent Platform
-### *High-Dimensional Semantic Resume Analysis & RAG Orchestration Engine*
 
-[![Streamlit](https://img.shields.io/badge/Streamlit-1.35.0-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)](https://streamlit.io/)
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Google Gemini](https://img.shields.io/badge/GenAI-Gemini%20Flash%201.5-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
-[![FAISS](https://img.shields.io/badge/Vector%20Compute-FAISS-005C84?style=for-the-badge&logo=meta&logoColor=white)](https://github.com/facebookresearch/faiss)
-[![Hugging Face](https://img.shields.io/badge/Latent%20Space-Sentence%20Transformers-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)](https://huggingface.co/)
-[![Docker](https://img.shields.io/badge/DevOps-DevContainer-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://containers.dev/)
+# AI Semantic Candidate Matcher
 
-**The Enterprise AI Talent Platform** is not just a resume parser—it is a sophisticated **RAG (Retrieval-Augmented Generation)** system. By projecting candidate profiles and job descriptions into a shared high-dimensional latent space, it performs semantic alignment far superior to traditional keyword matching. It features an interactive **AI Interrogator** that allows recruiters to "chat" with resumes to verify claims using evidence-based vector retrieval.
+An AI-assisted application for ranking resumes against a job description using semantic similarity and structured resume analysis. 
+
+Recruiters often receive hundreds of resumes for a single opening. Traditional keyword matching often fails when candidates use different terminology for the same skills. This tool solves that by using **Sentence Embeddings** for semantic matching and **Google Gemini** for structured experience extraction.
 
 ---
 
-## 🏗️ System Architecture
+## Architecture
 
-The solution implements a **Multi-Stage Reasoning Pipeline** fusing deterministic logic with probabilistic Generative AI.
+The system follows a modular, layered architecture to ensure separation of concerns and scalability.
 
+### System Diagram
 ```mermaid
 graph TD
-    subgraph "Ingestion Layer"
-    A[PDF/DOCX Upload] -->|PyMuPDF/Python-Docx| B(Text Extraction)
-    B -->|Spacy NLP| C(Tokenization & Cleaning)
+    subgraph Frontend
+        A[Streamlit UI]
     end
 
-    subgraph "Vector Compute Layer"
-    C -->|all-MiniLM-L6-v2| D[Dense Vector Embeddings]
-    D -->|IndexFlatL2| E[(FAISS Vector Store)]
+    subgraph Backend [FastAPI Backend]
+        B[API Endpoint /analyze]
+        C[TalentOrchestrator]
+        
+        subgraph Infrastructure
+            D[SecureParser]
+            E[AIClient - Gemini]
+        end
+        
+        subgraph Services
+            F[TalentScorer]
+            G[Embedding Engine - SentenceTransformers]
+        end
     end
 
-    subgraph "Inference Engine"
-    F[Job Description] -->|Embedding| G(Semantic Similarity Calc)
-    D <--> G
-    B -->|Zero-Shot Prompting| H[Gemini 1.5 Flash]
-    H -->|JSON Parsing| I(Structured Data: Exp, Edu)
-    end
+    A -->|Files + JD| B
+    B --> C
+    C --> D
+    D -->|Extracted Text| C
+    C -->|Masked Text| E
+    C -->|Embeddings| G
+    C --> F
+    F -->|Ranked Results| B
+    B -->|JSON Response| A
+```
 
-    subgraph "RAG Interrogator"
-    J[User Question] -->|Vector Search| E
-    E -->|Top-K Chunks| K[Context Window]
-    K --> H
-    H -->|Hallucination-Free Answer| L[Evidence-Based Output]
-    end
+### Component Breakdown
+*   **Streamlit UI**: A user-friendly interface for uploading PDF/DOCX files and inputting job descriptions.
+*   **FastAPI API**: The gateway that handles requests, file validation, and response formatting.
+*   **TalentOrchestrator**: The "brain" of the application that coordinates data flow between the parser, the AI client, and the scoring engine.
+*   **SecureParser**: Extracts text from documents and scrubs Personally Identifiable Information (PII) like emails and phone numbers before processing.
+*   **AIClient**: Interfaces with Google Gemini to perform high-level analysis and extract structured experience data.
+*   **TalentScorer**: Calculates the final ranking using a weighted combination of semantic embeddings and experience normalization.
+
+---
+
+##  Features
+
+- **Multi-Format Parsing**: Supports PDF and DOCX resumes using PyMuPDF and python-docx.
+- **MIME Validation**: Ensures only valid document types are processed.
+- **PII Scrubbing**: Automatically masks email addresses and phone numbers before sending data to the LLM for privacy.
+- **AI Analysis**: Uses Google Gemini to extract structured candidate information and generate summaries.
+- **Semantic Matching**: Leverages `all-MiniLM-L6-v2` Sentence Transformers for deep contextual understanding.
+- **Weighted Scoring**: Configurable logic that combines cosine similarity with years of experience.
+- **Containerized**: Fully Dockerized for easy deployment via Docker Compose.
+
+---
+
+## Technologies
+
+| Category | Technology |
+| :--- | :--- |
+| **Language** | Python 3.10+ |
+| **Backend** | FastAPI |
+| **Frontend** | Streamlit |
+| **LLM** | Google Gemini |
+| **Embeddings** | Sentence Transformers (`all-MiniLM-L6-v2`) |
+| **Parsing** | PyMuPDF, python-docx |
+| **Validation** | Pydantic & Pydantic Settings |
+| **Vector Math** | NumPy |
+| **Deployment** | Docker / Docker Compose |
+
+---
+
+##  Project Structure
+
+```text
+src/
+├── api/             # FastAPI endpoints and request handling
+├── core/            # Configuration (Pydantic Settings) and Schemas
+├── infra/           # Gemini client, Document parsers, and External utilities
+├── services/        # Orchestration logic and Scoring engines
+└── utils/           # Logging and PII scrubbing helpers
+
+streamlit_app.py     # Frontend application
+requirements.txt     # Python dependencies
+docker-compose.yml   # Multi-container configuration
 ```
 
 ---
 
-## 🧠 Core Intelligence Modules
+##  Getting Started
 
-### 1. High-Dimensional Semantic Matching (Cosine Similarity)
-Traditional parsers fail on context. We utilize **Sentence Transformers (`all-MiniLM-L6-v2`)** to encode text into **384-dimensional vectors**.
-*   **The Math:** We calculate the cosine similarity between the Job Description vector ($V_{JD}$) and Candidate vector ($V_{Cand}$).
-    $$ \text{Score} = \frac{V_{JD} \cdot V_{Cand}}{\|V_{JD}\| \|V_{Cand}\|} $$
-*   **Result:** Matches candidates who describe the *concept* of "Scalable Cloud Architecture" even if they don't explicitly say "AWS".
-
-### 2. Retrieval-Augmented Generation (RAG)
-We implemented a **FAISS (Facebook AI Similarity Search)** index for real-time candidate interrogation.
-*   **Chunking Strategy:** Resumes are split into 300-word sliding windows with 50-word overlap to preserve context boundaries.
-*   **Vector Search:** When a user asks *"Did they use Python in a production environment?"*, the system retrieves the nearest neighbor vectors to the query.
-*   **Grounded Answer:** These vectors are injected into the Gemini context window, forcing the LLM to answer **only** based on retrieved evidence, eliminating hallucinations.
-
-### 3. Weighted Ensemble Scoring Algorithm
-Final ranking is not arbitrary. It is a deterministic weighted sum of four distinct analytical axes:
-*   $\alpha$ **(40%) Semantic Alignment:** Vector space proximity.
-*   $\beta$ **(30%) Hard Skill Overlap:** Regex-based exact matching against `SKILLS_DB`.
-*   $\gamma$ **(20%) Experience Normalization:** LLM-extracted years vs. Requirements.
-*   $\delta$ **(10%) Education Hierarchy:** Weighted mapping (PhD > Master's > Bachelor's).
-
----
-
-## 🛠️ Technical Stack & Engineering Decisions
-
-| Domain | Technology | Engineering Rationale |
-| :--- | :--- | :--- |
-| **LLM Orchestration** | `Google Gemini 1.5 Flash` | Selected for high throughput and massive context window (1M tokens) for handling verbose CVs. |
-| **Vector Database** | `FAISS-CPU` | In-memory vector search optimized for dense vectors; faster than pinecone/chroma for session-based indexing. |
-| **Embeddings** | `Sentence-Transformers` | Uses `all-MiniLM-L6-v2` for the optimal balance of inference speed and semantic capture quality. |
-| **UI/State** | `Streamlit` | Utilizes `@st.cache_resource` to keep heavy ML models (Spacy/Transformers) in memory, ensuring sub-second reruns. |
-| **Environment** | `DevContainers` | Full infrastructure-as-code. Pre-configured with Python 3.11 and system-level dependencies (build-essential) for FAISS. |
-
----
-
-## ⚡ Deployment & Infrastructure
-
-### 🐳 The Dockerized Workflow (DevContainer)
-This project is built for **Codespaces** and **Remote Containers**. Zero "it works on my machine" issues.
-
-1.  **System Dependencies:** The `devcontainer.json` automatically runs `apt update` and installs system libraries required for `fitz` (PyMuPDF) and `faiss`.
-2.  **Port Forwarding:** Auto-configures port `8501` for instant preview.
-3.  **Extension Pack:** Pre-loads `ms-python` and `pylance` for immediate intellisense.
-
-### 🚀 Local Setup (Standard)
-
+### 1. Clone the Repository
 ```bash
-# 1. Clone the repository
-git clone https://github.com/yourusername/ai-semantic-candidate-matcher.git
+git clone https://github.com/SalmaTech-03/AI-semantic-candidate-matcher.git
+cd AI-semantic-candidate-matcher
+```
 
-# 2. Initialize Virtual Environment
-python -m venv venv
-source venv/bin/activate
+### 2. Configuration
+Create a `.env` file in the root directory:
+```env
+GEMINI_API_KEY=your_google_gemini_api_key_here
+```
 
-# 3. Install the AI Stack
+### 3. Run with Docker (Recommended)
+```bash
+docker-compose up --build
+```
+*   Frontend: `http://localhost:8501`
+*   Backend API: `http://localhost:8000`
+
+### 4. Manual Installation
+**Install Dependencies:**
+```bash
 pip install -r requirements.txt
-
-# 4. Download NLP Artifacts
-python -m spacy download en_core_web_sm
-
-# 5. Configure Secrets
-# Create .streamlit/secrets.toml and add:
-# GOOGLE_API_KEY = "your_key_here"
-
-# 6. Launch Application
+```
+**Start Backend:**
+```bash
+uvicorn src.api.main:app --reload
+```
+**Start Frontend:**
+```bash
 streamlit run streamlit_app.py
 ```
 
 ---
 
-## 📂 Project Directory Structure
+## Scoring Logic
 
-```text
-ai-semantic-candidate-matcher/
-├── .devcontainer/             # 🐳 Infrastructure as Code
-│   └── devcontainer.json      # Docker & VS Code Config
-├── .streamlit/                # 🔐 App Configuration
-│   └── secrets.toml           # API Keys (GitIgnored)
-├── src/                       # (Optional) Module separation
-├── streamlit_app.py           # 🚀 Main Application Kernel
-├── requirements.txt           # 📦 Pinned Production Dependencies
-└── README.md                  # 📄 System Documentation
+The application calculates an **Overall Score** using the following formula:
+
+$$Score = (SemanticMatch \times W_1) + (ExperienceAlignment \times W_2)$$
+
+*   **Semantic Match**: Cosine similarity between the job description and the resume text.
+*   **Experience Alignment**: Extracted years of experience normalized against a 5-year benchmark.
+*   **Weights ($W$):** Configurable in `src/core/config.py`.
+
+---
+
+##  API Reference
+
+### `POST /analyze`
+Analyzes resumes against a job description.
+
+**Form Data:**
+- `jd`: (string) The job description text.
+- `files`: (List of files) PDF or DOCX resume files.
+
+**Example Response:**
+```json
+[
+  {
+    "name": "john_doe_resume.pdf",
+    "score": 87.5,
+    "details": {
+      "overall_score": 87.5,
+      "semantic_match": 90.3,
+      "experience_alignment": 84.7,
+      "reasoning": "Candidate shows 5+ years of experience in React and FastAPI."
+    },
+    "summary": "Experienced full-stack developer with strong background in Python..."
+  }
+]
 ```
 
 ---
 
-## 🔮 Future Engineering Roadmap
+##  Limitations & Future Roadmap
 
-*   **GraphRAG Integration:** Move beyond vector similarity to Knowledge Graph extraction for mapping candidate relationships (e.g., "Worked at Google" -> implies "High Scalability Experience").
-*   **Multi-Modal Analysis:** Use Gemini Pro Vision to analyze graphical resume elements (charts, portfolio thumbnails).
-*   **Asynchronous Processing:** Implement Celery/Redis for batch processing of 1000+ resumes.
+**Current Limitations:**
+- Sequential resume processing (non-batched).
+- Fixed 5-year experience benchmark.
+- Manual JSON parsing of AI responses.
+- No persistent database or authentication.
+
+**Future Improvements:**
+- [ ] Add automated unit and integration tests.
+- [ ] Implement parallel processing for faster resume analysis.
+- [ ] Use Pydantic structured parsing for Gemini responses.
+- [ ] Add GitHub Actions for CI/CD.
+- [ ] Implement batch embedding generation.
 
 ---
 
-<div align="center">
-
-**[View Source Code](https://github.com/syedsalma2003/ai-semantic-candidate-matcher)** | **[Report Bug](https://github.com/syedsalma2003/ai-semantic-candidate-matcher/issues)**
-
-<sub>Engineered with precision. Powered by Mathematics & Transformers.</sub>
-</div>
+## 🤝 Contributing
+Issues and pull requests are welcome. Please ensure that:
+1. Business logic remains within the `services` package.
+2. New features are documented.
+3. The layered architecture is respected.
